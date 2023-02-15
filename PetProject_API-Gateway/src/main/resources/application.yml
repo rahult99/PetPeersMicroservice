@@ -1,0 +1,59 @@
+
+server:
+  port: 8090
+
+
+ 
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka 
+  instance:
+    hostname: localhost
+    prefer-ip-address: true
+
+
+
+spring:
+  application:
+    name : api-gateway
+  cloud:
+    gateway:
+      routes:
+      - id: DBServiceModule
+        uri: http://localhost:8091/
+        predicates:
+        - Path=/PetPeers/api/Pet/** 
+        filters:
+            - name: CircuitBreaker
+              args:
+                name: producername-eureka
+                fallbackuri: forward:/DBServiceFallBack
+      - id: UserServiceModule
+        uri: http://localhost:8092/
+        predicates:
+        - Path=/PetPeers/api/User/** 
+        filters:
+            - name: CircuitBreaker
+              args:
+                name: consumername-eureka
+                fallbackuri: forward:/UserServiceFallBack
+                
+                
+hystrix:
+  command:
+    fallbackcmd:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 50000
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: hystrix.stream
+        
+
+  
